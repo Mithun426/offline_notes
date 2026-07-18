@@ -27,7 +27,7 @@ class _ConflictResolverDialogState extends State<ConflictResolverDialog> {
     });
 
     await widget.repository.resolveConflict(widget.localNote.id, keepLocal);
-    
+
     widget.onResolved();
     if (mounted) {
       Navigator.pop(context);
@@ -48,13 +48,24 @@ class _ConflictResolverDialogState extends State<ConflictResolverDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                    'This note was modified on the server and locally. Which version would you like to keep?'),
+                  'This note was modified on the server and locally. Which version would you like to keep?',
+                ),
                 const SizedBox(height: 16),
-                const Text('Local Version:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'Local Version:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 Text(widget.localNote.title),
-                Text(widget.localNote.body, maxLines: 2, overflow: TextOverflow.ellipsis),
+                Text(
+                  widget.localNote.body,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const SizedBox(height: 16),
-                const Text('Remote Version:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'server:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const Text('(Will overwrite local changes)'),
               ],
             ),

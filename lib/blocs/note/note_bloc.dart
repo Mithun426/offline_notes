@@ -24,8 +24,10 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
   }
 
   Future<void> _onAddNote(AddNote event, Emitter<NoteState> emit) async {
+    emit(NoteSaving());
     try {
       await _repository.addNote(event.title, event.body);
+      emit(NoteSavedSuccessfully());
       add(LoadNotes()); // Reload to reflect changes
     } catch (e) {
       emit(NoteError(e.toString()));
@@ -33,8 +35,10 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
   }
 
   Future<void> _onUpdateNote(UpdateNote event, Emitter<NoteState> emit) async {
+    emit(NoteSaving());
     try {
       await _repository.updateNote(event.id, event.title, event.body);
+      emit(NoteSavedSuccessfully());
       add(LoadNotes());
     } catch (e) {
       emit(NoteError(e.toString()));

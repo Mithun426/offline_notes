@@ -54,8 +54,8 @@ class NoteRepository {
     if (keepLocal) {
       // Mark as pending sync to force push to server
       final updatedNote = localNote.copyWith(
-          syncStatus: SyncStatus.pendingSync,
-          updatedAt: DateTime.now()
+        syncStatus: SyncStatus.pendingSync,
+        updatedAt: DateTime.now(),
       );
       await _hiveService.saveNote(updatedNote);
       await syncNotes();
@@ -63,11 +63,11 @@ class NoteRepository {
       // Fetch remote and overwrite local
       final remoteNote = await _apiService.getNote(noteId);
       if (remoteNote != null) {
-          final updatedNote = remoteNote.copyWith(syncStatus: SyncStatus.synced);
-          await _hiveService.saveNote(updatedNote);
+        final updatedNote = remoteNote.copyWith(syncStatus: SyncStatus.synced);
+        await _hiveService.saveNote(updatedNote);
       } else {
-          // If deleted on server
-          await _hiveService.removeNotePermanently(noteId);
+        // If deleted on server
+        await _hiveService.removeNotePermanently(noteId);
       }
     }
   }
@@ -75,7 +75,7 @@ class NoteRepository {
   Future<void> syncNotes({void Function(String noteId)? onNoteSyncing}) async {
     final connectivityResult = await _connectivity.checkConnectivity();
     if (connectivityResult.contains(ConnectivityResult.none)) {
-        return; // Offline, can't sync
+      return; // Offline, can't sync
     }
 
     try {
@@ -83,32 +83,43 @@ class NoteRepository {
       final pendingNotes = _hiveService.getPendingSyncNotes();
       for (var localNote in pendingNotes) {
         try {
-            onNoteSyncing?.call(localNote.id);
-            // Add a small artificial delay so the user can see the "syncing" animation
-            await Future.delayed(const Duration(milliseconds: 800));
-            
-            final remoteNote = await _apiService.getNote(localNote.id);
+          onNoteSyncing?.call(localNote.id);
+          // Add a small artificial delay so the user can see the "syncing" animation
+          await Future.delayed(const Duration(milliseconds: 800));
 
-            if (remoteNote != null && remoteNote.updatedAt.isAfter(localNote.updatedAt)) {
-                // Server has a newer version, mark as conflict
-                await _hiveService.saveNote(localNote.copyWith(syncStatus: SyncStatus.conflict));
-                continue; // Skip pushing
-            }
+          final remoteNote = await _apiService.getNote(localNote.id);
 
-            if (localNote.isDeleted) {
-                await _apiService.deleteNote(localNote.id);
-                await _hiveService.removeNotePermanently(localNote.id);
+          if (remoteNote != null &&
+              remoteNote.updatedAt.isAfter(localNote.updatedAt)) {
+            // Server has a newer version, mark as conflict
+            await _hiveService.saveNote(
+              localNote.copyWith(syncStatus: SyncStatus.conflict),
+            );
+            continue; // Skip pushing
+          }
+
+          if (localNote.isDeleted) {
+            await _apiService.deleteNote(localNote.id);
+            await _hiveService.removeNotePermanently(localNote.id);
+          } else {
+            if (remoteNote == null) {
+              final createdServerNote = await _apiService.createNote(localNote);
+              // Remove the old local note with the UUID
+              await _hiveService.removeNotePermanently(localNote.id);
+              // Save the new note from the server, marked as synced
+              await _hiveService.saveNote(
+                createdServerNote.copyWith(syncStatus: SyncStatus.synced),
+              );
             } else {
-                if (remoteNote == null) {
-                    await _apiService.createNote(localNote);
-                } else {
-                    await _apiService.updateNote(localNote);
-                }
-                // Mark as synced locally
-                await _hiveService.saveNote(localNote.copyWith(syncStatus: SyncStatus.synced));
+              await _apiService.updateNote(localNote);
+              // Mark as synced locally
+              await _hiveService.saveNote(
+                localNote.copyWith(syncStatus: SyncStatus.synced),
+              );
             }
+          }
         } catch (e) {
-            print('Failed to sync note ${localNote.id}: $e');
+          print('Failed to sync note ${localNote.id}: $e');
         }
       }
 
@@ -116,15 +127,19 @@ class NoteRepository {
       final serverNotes = await _apiService.fetchNotes();
       for (var remoteNote in serverNotes) {
         final localNote = _hiveService.getNote(remoteNote.id);
-        
+
         if (localNote == null) {
-             // New note from server
-             await _hiveService.saveNote(remoteNote.copyWith(syncStatus: SyncStatus.synced));
-        } else if (localNote.syncStatus == SyncStatus.synced || localNote.syncStatus == SyncStatus.conflict) {
-             if (remoteNote.updatedAt.isAfter(localNote.updatedAt)) {
-                // Update local version if server is newer and we don't have pending changes
-                await _hiveService.saveNote(remoteNote.copyWith(syncStatus: SyncStatus.synced));
-             }
+          // New note from server
+          await _hiveService.saveNote(
+            remoteNote.copyWith(syncStatus: SyncStatus.synced),
+          );
+        } else if (localNote.syncStatus == SyncStatus.synced) {
+          if (remoteNote.updatedAt.isAfter(localNote.updatedAt)) {
+            // Update local version if server is newer and we don't have pending changes
+            await _hiveService.saveNote(
+              remoteNote.copyWith(syncStatus: SyncStatus.synced),
+            );
+          }
         }
       }
     } catch (e) {

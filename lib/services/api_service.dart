@@ -30,9 +30,10 @@ class ApiService {
       }
   }
 
-  Future<void> createNote(Note note) async {
+  Future<Note> createNote(Note note) async {
     try {
-      await _dio.post('/notes', data: note.toJson());
+      final response = await _dio.post('/notes', data: note.toJson());
+      return Note.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to create note: $e');
     }

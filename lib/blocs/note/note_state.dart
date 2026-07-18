@@ -12,6 +12,10 @@ class NoteInitial extends NoteState {}
 
 class NoteLoading extends NoteState {}
 
+class NoteSaving extends NoteState {}
+
+class NoteSavedSuccessfully extends NoteState {}
+
 class NoteLoaded extends NoteState {
   final List<Note> notes;
 
