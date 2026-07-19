@@ -4,6 +4,7 @@ import '../blocs/note/note_bloc.dart';
 import '../blocs/note/note_event.dart';
 import '../models/note.dart';
 import '../blocs/note/note_state.dart';
+import '../repositories/note_repository.dart';
 
 class NoteEditorScreen extends StatefulWidget {
   final Note? note;
@@ -46,28 +47,53 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     final cs = Theme.of(context).colorScheme;
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Note?'),
-        content: const Text('Are you sure you want to delete this note? This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: cs.error,
-              foregroundColor: cs.onError,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      barrierDismissible: false,
+      builder: (context) {
+        bool isDeleting = false;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Delete Note?'),
+              content: const Text('Are you sure you want to delete this note? This action cannot be undone.'),
+              actions: [
+                TextButton(
+                  onPressed: isDeleting ? null : () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: isDeleting
+                      ? null
+                      : () async {
+                          setState(() => isDeleting = true);
+                          await context.read<NoteRepository>().deleteNote(widget.note!.id);
+                          if (context.mounted) {
+                            Navigator.pop(context, true);
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: cs.error,
+                    foregroundColor: cs.onError,
+                  ),
+                  child: isDeleting
+                      ? SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: cs.onError,
+                          ),
+                        )
+                      : const Text('Delete'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
 
     if (confirm == true && mounted) {
-      context.read<NoteBloc>().add(DeleteNote(widget.note!.id));
+      context.read<NoteBloc>().add(LoadNotes());
       Navigator.pop(context);
     }
   }

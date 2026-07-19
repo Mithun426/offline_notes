@@ -47,24 +47,19 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: 'Offline-First Notes',
         themeMode: ThemeMode.dark,
-
-        // ─── Every color / style is defined here once ───────────────────────
         darkTheme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.dark,
-
-          // Core palette — change here to retheme the whole app
+          scaffoldBackgroundColor: const Color(0xFF12121F),
           colorScheme: const ColorScheme.dark(
-            primary:    Color(0xFFFFC107), // amber accent
+            primary:    Color(0xFFFFC107),
             secondary:  Color(0xFFFFC107),
-            surface:    Color(0xFF1E1E30), // card surface
+            surface:    Color(0xFF1E1E30),
             onPrimary:  Colors.black,
             onSecondary: Colors.black,
-            onSurface:  Color(0xFFF0F0F0), // primary text
+            onSurface:  Color(0xFFF0F0F0),
             error:      Color(0xFFCF6679),
           ),
-
-          scaffoldBackgroundColor: const Color(0xFF12121F), // page bg
 
           appBarTheme: const AppBarTheme(
             backgroundColor: Color(0xFF12121F),
@@ -75,15 +70,6 @@ class MyApp extends StatelessWidget {
               fontSize: 20,
               fontWeight: FontWeight.w800,
             ),
-          ),
-
-          tabBarTheme: const TabBarThemeData(
-            labelColor: Color(0xFFFFC107),
-            unselectedLabelColor: Color(0xFF9090AA),
-            indicatorColor: Color(0xFFFFC107),
-            dividerColor: Color(0xFF252540),
-            labelStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-            unselectedLabelStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
           ),
 
           floatingActionButtonTheme: const FloatingActionButtonThemeData(
@@ -145,7 +131,6 @@ class MyApp extends StatelessWidget {
             style: TextButton.styleFrom(foregroundColor: const Color(0xFFFFC107)),
           ),
         ),
-        // ────────────────────────────────────────────────────────────────────
 
         home: const HomeScreen(),
         ),
